@@ -150,7 +150,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	const text = textDocument.getText();
 
 	// regex that looks for "chainId: '<any number>'," in text, where quotes are optional, and grabs the number
-	const pattern = /chainId\s*:\s*['"]?(\d+)['"]?\s*,/g;
+	const pattern = /chainId\s*:\s*['"]?(\d+)['"]?\s*/g;
 	let m: RegExpExecArray | null;
 
 	let problems = 0;
@@ -174,7 +174,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		} else {
 			// offer to deploy to the chain
 			const diagnostic: Diagnostic = {
-				severity: DiagnosticSeverity.Error,
+				severity: DiagnosticSeverity.Warning,
 				range: {
 					start: textDocument.positionAt(m.index),
 					end: textDocument.positionAt(m.index + m[0].length)
