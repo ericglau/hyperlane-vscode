@@ -186,7 +186,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		} else {
 			// offer to deploy to the chain
 			const diagnostic: Diagnostic = {
-				severity: DiagnosticSeverity.Error,
+				severity: DiagnosticSeverity.Warning,
 				range: {
 					start: textDocument.positionAt(m.index),
 					end: textDocument.positionAt(m.index + m[0].length)
