@@ -153,9 +153,25 @@ documents.onDidChangeContent(change => {
 	validateTextDocument(change.document);
 });
 
+function initializeAddressesJson(settings: HyperlaneVSCodeSettings) {
+	// check if file at (path.join(configDir, 'artifacts'), 'addresses.json') exists
+	if (settings.configDir !== undefined) {
+		const artifactsDir = path.join(settings.configDir, 'artifacts');
+		if (!fs.existsSync(path.join(artifactsDir, 'addresses.json'))) {
+			// if not, create it
+			fs.mkdirSync(artifactsDir, { recursive: true });
+			fs.writeFileSync(path.join(artifactsDir, 'addresses.json'), '{}');
+		}
+	}
+}
+
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+
 	// In this simple example we get the settings for every validate run.
 	const settings = await getDocumentSettings(textDocument.uri);
+
+	initializeAddressesJson(settings);
+
 
 	// The validator creates diagnostics for detected patterns
 	const text = textDocument.getText();
