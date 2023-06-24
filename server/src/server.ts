@@ -146,43 +146,44 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// In this simple example we get the settings for every validate run.
 	const settings = await getDocumentSettings(textDocument.uri);
 
-	// The validator creates diagnostics for all uppercase words length 2 and more
+	// The validator creates diagnostics for detected patterns
 	const text = textDocument.getText();
-	const pattern = /\b[A-Z]{2,}\b/g;
+
+	// regex that looks for "chainId: '<any number>'," in text, where quotes are optional, and grabs the number
+	const pattern = /chainId\s*:\s*['"]?(\d+)['"]?\s*,/g;
 	let m: RegExpExecArray | null;
 
 	let problems = 0;
 	const diagnostics: Diagnostic[] = [];
 	while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
 		problems++;
-		const diagnostic: Diagnostic = {
-			severity: DiagnosticSeverity.Warning,
-			range: {
-				start: textDocument.positionAt(m.index),
-				end: textDocument.positionAt(m.index + m[0].length)
-			},
-			message: `${m[0]} is all uppercase.`,
-			source: 'ex'
-		};
-		if (hasDiagnosticRelatedInformationCapability) {
-			diagnostic.relatedInformation = [
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
-					},
-					message: 'Spelling matters'
+
+		const chainId = m[1];
+		const metadata = chainIdToMetadata[chainId];
+		if (metadata !== undefined) {
+			// chainId is valid
+			const diagnostic: Diagnostic = {
+				severity: DiagnosticSeverity.Information,
+				range: {
+					start: textDocument.positionAt(m.index),
+					end: textDocument.positionAt(m.index + m[0].length)
 				},
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
-					},
-					message: 'Particularly for names'
-				}
-			];
+				message: `${metadata.displayName ?? metadata.name} network is ready to use on Hyperlane! 🚀🚀🚀`,
+			};
+			diagnostics.push(diagnostic);
+		} else {
+			// offer to deploy to the chain
+			const diagnostic: Diagnostic = {
+				severity: DiagnosticSeverity.Warning,
+				range: {
+					start: textDocument.positionAt(m.index),
+					end: textDocument.positionAt(m.index + m[0].length)
+				},
+				message: `Chain ID ${chainId} is not supported by Hyperlane. Would you like to deploy to this chain?`,
+			}
+			diagnostics.push(diagnostic);
 		}
-		diagnostics.push(diagnostic);
+				
 	}
 
 	// Send the computed diagnostics to VSCode.
@@ -236,13 +237,9 @@ connection.onHover(
 
 			connection.console.log(text);
 
-			if (text.trim().startsWith('chainId:')) {
-				let chainId = text.trim().split(':')[1].trim();
-				// remove comma
-				chainId = chainId.replace(',', '');
-				// remove any surrounding quotes
-				chainId = chainId.replace(/['"]+/g, '');
+			const chainId = getChainIdFromLine(text);
 
+			if (chainId !== undefined) {
 				const metadata = chainIdToMetadata[chainId];
 				connection.console.log(JSON.stringify(metadata, null, 2));
 				hover.contents = JSON.stringify(metadata, null, 2);
@@ -276,6 +273,17 @@ ${metadata.publicRpcUrls.map((rpcUrl) => {
 	}
 	
 );
+
+function getChainIdFromLine(text: string): string | undefined {
+	if (text.trim().startsWith('chainId:')) {
+		let chainId = text.trim().split(':')[1].trim();
+		// remove comma
+		chainId = chainId.replace(',', '');
+		// remove any surrounding quotes
+		chainId = chainId.replace(/['"]+/g, '');
+		return chainId;
+	}
+}
 
 // This handler resolves additional information for the item selected in
 // the completion list.
