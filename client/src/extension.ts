@@ -14,9 +14,14 @@ import {
 	TransportKind
 } from 'vscode-languageclient/node';
 
+import { HyperlanePermissionlessDeployer } from "./hyperlane/src/core/HyperlanePermissionlessDeployer";
+import { ethers } from 'ethers';
+import { MultiProvider, chainIdToMetadata } from '@hyperlane-xyz/sdk';
+import { getMultiProvider } from './hyperlane/src/config';
+
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 	// The server is implemented in node
 	const serverModule = context.asAbsolutePath(
 		path.join('server', 'out', 'server.js')
@@ -50,10 +55,28 @@ export function activate(context: ExtensionContext) {
 		clientOptions,
 	);
 	
-	commands.registerCommand("deploy.hyperlane", (chainId: string) => {
-		 let out = vscode.window.createOutputChannel("Hyperlane");
+	commands.registerCommand("deploy.hyperlane", async (chainId: string) => {
+		let out = vscode.window.createOutputChannel("Hyperlane");
 
-		 out.appendLine(`Deploying Hyperlane to chain ID ${chainId}...`);
+		out.appendLine(`Deploying Hyperlane to chain ID ${chainId}...`);
+
+		let logger = (msg: string) => {
+			out.appendLine(msg);
+		};
+
+		const multiProvider = getMultiProvider();
+		const signer = new ethers.Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
+		multiProvider.setSharedSigner(signer);
+
+		const deployer = new HyperlanePermissionlessDeployer(
+			multiProvider,
+			signer,
+			'anvil1',
+			['anvil2'],
+			false,
+			logger,
+		);
+		await deployer.deploy();
 	});
 
 	// Start the client. This will also launch the server
