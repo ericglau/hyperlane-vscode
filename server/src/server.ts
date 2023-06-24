@@ -14,7 +14,10 @@ import {
 	CompletionItemKind,
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
-	InitializeResult
+	InitializeResult,
+	HoverParams,
+	Hover,
+	MarkedString
 } from 'vscode-languageserver/node';
 
 import {
@@ -55,7 +58,11 @@ connection.onInitialize((params: InitializeParams) => {
 			// Tell the client that this server supports code completion.
 			completionProvider: {
 				resolveProvider: true
-			}
+			},
+			hoverProvider : {
+				workDoneProgress: false
+			},
+
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -206,6 +213,59 @@ connection.onCompletion(
 		];
 	}
 );
+
+connection.onHover(
+
+	async (_params: HoverParams): Promise<Hover> => {
+		let textDocument = documents.get(_params.textDocument.uri)
+		let position = _params.position
+		let hover : Hover = {
+			contents: "abc"
+		}
+	// 	if (textDocument !== undefined) {
+	// 		var start = {
+	// 			line: position.line,
+	// 			character: 0,
+	// 		};
+	// 		var end = {
+	// 			line: position.line + 1,
+	// 			character: 0,
+	// 		};
+	// 		var text = textDocument.getText({ start, end });
+	// 		var index = textDocument.offsetAt(position) - textDocument.offsetAt(start);
+	// 		var word = getWord(text, index);
+
+	// 		let buf : MarkedString = "";
+	// 		if (isValidEthereumAddress(word)) {
+	// 			// Display Ethereum address, ENS name, mainnet ETH and DAI balances
+	// 			buf = await getHoverMarkdownForAddress(word);
+	// 		} else {
+	// 			let normalized = normalizeHex(word);
+	// 			if (isPrivateKey(normalized)) {
+	// 				// Convert to public key then display
+	// 				buf = await getHoverMarkdownForAddress(toPublicKey(normalized));
+	// 			} else {
+	// 				// If it's not a private key, check if it has an ENS name
+	// 				let address = await ENSLookup(word);
+	// 				if (address != "") {
+	// 					buf = await getHoverMarkdownForAddress(address);
+	// 				}
+	// 			}
+	// 		}
+	// 		hover.contents = buf;
+	// 	}
+		return hover;
+	}
+	
+);
+
+// async function getHoverMarkdownForAddress(address: string) {
+// 	var result = await getMarkdownForTokenAddress(address)
+// 	if (result === "") {
+// 		result = await getMarkdownForRegularAddress(address)
+// 	}
+// 	return result;
+// }
 
 // This handler resolves additional information for the item selected in
 // the completion list.
