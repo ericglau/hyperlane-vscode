@@ -95,7 +95,7 @@ export async function activate(context: ExtensionContext) {
 			signer,
 			local,
 			remotes,
-			false,
+			true,
 			logger,
 			configDir
 		);

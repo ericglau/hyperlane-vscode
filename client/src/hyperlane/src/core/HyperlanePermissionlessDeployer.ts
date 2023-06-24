@@ -203,6 +203,7 @@ export class HyperlanePermissionlessDeployer {
         this.chains,
         this.multiProvider,
         startBlocks,
+        this.configDir,
       );
 
       this.logger(`Writing agent config to artifacts/agent_config.json`);

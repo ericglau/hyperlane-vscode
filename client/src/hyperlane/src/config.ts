@@ -178,15 +178,17 @@ export function buildOverriddenAgentConfig(
   chains: ChainName[],
   multiProvider: MultiProvider,
   startBlocks: ChainMap<number>,
+  configDir: string,
 ) {
   const localAddresses = readJSON<HyperlaneAddressesMap<any>>(
-    './artifacts',
+    path.join(configDir, 'artifacts'),
     'addresses.json',
   );
   const mergedAddresses: HyperlaneAddressesMap<any> = objMerge(
     sdkContractAddresses,
     localAddresses,
   );
+
   const filteredAddresses: ChainMap<HyperlaneAgentAddresses> = objFilter(
     mergedAddresses,
     (chain, v): v is HyperlaneAgentAddresses =>
