@@ -17,16 +17,13 @@ import {
 	InitializeResult,
 	HoverParams,
 	Hover,
-	MarkedString
 } from 'vscode-languageserver/node';
 
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
-import { sepolia } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
-
-// const {indexOfRegex, lastIndexOfRegex} = require('index-of-regex')
+import { chainIdToMetadata } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -240,40 +237,40 @@ connection.onHover(
 			connection.console.log(text);
 
 			if (text.trim().startsWith('chainId:')) {
-				const chainId = text.trim().split(':')[1].trim();
+				let chainId = text.trim().split(':')[1].trim();
+				// remove comma
+				chainId = chainId.replace(',', '');
+				// remove any surrounding quotes
+				chainId = chainId.replace(/['"]+/g, '');
 
-				hover.contents = `
+				const metadata = chainIdToMetadata[chainId];
+				connection.console.log(JSON.stringify(metadata, null, 2));
+				hover.contents = JSON.stringify(metadata, null, 2);
+
+				hover.contents = `\
 **Chain ID**: ${chainId}\n
-**Network**: Sepolia\n
-**RPCs**: \n
-${sepolia.publicRpcUrls.map((rpcUrl) => {
-	return `${rpcUrl.http}\n\n`
-})}`
+**Network**: ${metadata.displayName ?? metadata.name}\n
+`;
+
+        if (metadata.nativeToken !== undefined) {
+					hover.contents += `**Native Token**: ${metadata.nativeToken.name} (${metadata.nativeToken.symbol})\n\n`
+				}
+
+				if (metadata.blockExplorers !== undefined && metadata.blockExplorers.length > 0) {
+					hover.contents += `**Block Explorers**: ` + 
+						metadata.blockExplorers.map((blockExplorer) => {
+							return `[${blockExplorer.name}](${blockExplorer.url})`
+						}).join(', ');
+				}
+
+				hover.contents += `\n\n
+**RPCs**: \n\n
+${metadata.publicRpcUrls.map((rpcUrl) => {
+	return `- ${rpcUrl.http}`
+}).join('\n\n')}
+\n\n`;
 			}
 
-
-
-			// // // var index = textDocument.offsetAt(position) - textDocument.offsetAt(start);
-			// // // var word = getWord(text, index);
-
-			// let buf : MarkedString = "";
-			// // // if (isValidEthereumAddress(word)) {
-			// // // 	// Display Ethereum address, ENS name, mainnet ETH and DAI balances
-			// // // 	buf = await getHoverMarkdownForAddress(word);
-			// // // } else {
-			// // // 	let normalized = normalizeHex(word);
-			// // // 	if (isPrivateKey(normalized)) {
-			// // // 		// Convert to public key then display
-			// // // 		buf = await getHoverMarkdownForAddress(toPublicKey(normalized));
-			// // // 	} else {
-			// // // 		// If it's not a private key, check if it has an ENS name
-			// // // 		let address = await ENSLookup(word);
-			// // // 		if (address != "") {
-			// // // 			buf = await getHoverMarkdownForAddress(address);
-			// // // 		}
-			// // // 	}
-			// // // }
-			// hover.contents = buf;
 		}
 		return hover;
 	}
