@@ -24,6 +24,8 @@ import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
+import { sepolia } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
+
 // const {indexOfRegex, lastIndexOfRegex} = require('index-of-regex')
 
 // Create a connection for the server, using Node's IPC as a transport.
@@ -241,8 +243,12 @@ connection.onHover(
 				const chainId = text.trim().split(':')[1].trim();
 
 				hover.contents = `
-**Chain ID**: ${chainId}
-**Network**: Sepolia`;
+**Chain ID**: ${chainId}\n
+**Network**: Sepolia\n
+**RPCs**: \n
+${sepolia.publicRpcUrls.map((rpcUrl) => {
+	return `${rpcUrl.http}\n\n`
+})}`
 			}
 
 
