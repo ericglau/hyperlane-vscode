@@ -49,14 +49,14 @@ export async function activate(context: ExtensionContext) {
 
 	// Create the language client and start the client.
 	client = new LanguageClient(
-		'languageServerExample',
-		'Language Server Example',
+		'hyperlane',
+		'Hyperlane VS Code',
 		serverOptions,
 		clientOptions,
 	);
-	
+
 	commands.registerCommand("deploy.hyperlane", async (chainId: string) => {
-		let out = vscode.window.createOutputChannel("Hyperlane");
+		let out = vscode.window.createOutputChannel("Hyperlane VS Code");
 
 		out.appendLine(`Deploying Hyperlane to chain ID ${chainId}...`);
 
@@ -64,11 +64,18 @@ export async function activate(context: ExtensionContext) {
 			out.appendLine(msg);
 		};
 
-		const configDir = workspace.getConfiguration().get('languageServerExample.configDir') as string | undefined;
-
+		const configDir = workspace.getConfiguration().get('hyperlane.configDir') as string | undefined;
+		const privateKey = workspace.getConfiguration().get('hyperlane.privateKey') as string | undefined;
+	
+		if (!configDir) {
+			throw new Error("Set hyperlane.configDir in your VS Code settings under the Hyperlane extension");
+		}
+		if (!privateKey) {
+			throw new Error("Set hyperlane.privateKey in your VS Code settings under the Hyperlane extension");
+		}
 
 		const multiProvider = await getMultiProvider(configDir);
-		const signer = new ethers.Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
+		const signer = new ethers.Wallet(privateKey);
 		multiProvider.setSharedSigner(signer);
 
 
@@ -90,6 +97,8 @@ export async function activate(context: ExtensionContext) {
 	// Start the client. This will also launch the server
 	client.start();
 }
+
+
 
 export function deactivate(): Thenable<void> | undefined {
 	if (!client) {

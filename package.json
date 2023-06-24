@@ -23,15 +23,15 @@
 	"contributes": {
 		"configuration": {
 			"type": "object",
-			"title": "Example configuration",
+			"title": "Hyperlane VS Code",
 			"properties": {
-				"languageServerExample.maxNumberOfProblems": {
+				"hyperlane.maxNumberOfProblems": {
 					"scope": "resource",
 					"type": "number",
 					"default": 100,
 					"description": "Controls the maximum number of problems produced by the server."
 				},
-				"languageServerExample.trace.server": {
+				"hyperlane.trace.server": {
 					"scope": "window",
 					"type": "string",
 					"enum": [
@@ -42,10 +42,15 @@
 					"default": "off",
 					"description": "Traces the communication between VS Code and the language server."
 				},
-				"languageServerExample.configDir": {
+				"hyperlane.configDir": {
 					"scope": "resource",
 					"type": "string",
 					"description": "The Hyperlane config directory, for example: /Users/username/hyperlane"
+				},
+				"hyperlane.privateKey": {
+					"scope": "resource",
+					"type": "string",
+					"description": "Private key for deployments"
 				}
 			}
 		}

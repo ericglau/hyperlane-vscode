@@ -120,7 +120,7 @@ connection.onDidChangeConfiguration(change => {
 		documentSettings.clear();
 	} else {
 		globalSettings = <ExampleSettings>(
-			(change.settings.languageServerExample || defaultSettings)
+			(change.settings.hyperlane || defaultSettings)
 		);
 	}
 
@@ -136,7 +136,7 @@ function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
 	if (!result) {
 		result = connection.workspace.getConfiguration({
 			scopeUri: resource,
-			section: 'languageServerExample'
+			section: 'hyperlane'
 		});
 		documentSettings.set(resource, result);
 	}
@@ -296,13 +296,13 @@ connection.onHover(
 			};
 			var text = textDocument.getText({ start, end });
 
-			connection.console.log(text);
+			// connection.console.log(text);
 
 			const chainId = getChainIdFromLine(text);
 			const metadata = chainId ? chainIdToMetadata[chainId] : undefined;
 
 			if (metadata !== undefined) {
-				connection.console.log(JSON.stringify(metadata, null, 2));
+				// connection.console.log(JSON.stringify(metadata, null, 2));
 				hover.contents = JSON.stringify(metadata, null, 2);
 
 				hover.contents = `\
