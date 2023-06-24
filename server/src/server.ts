@@ -168,18 +168,18 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 					start: textDocument.positionAt(m.index),
 					end: textDocument.positionAt(m.index + m[0].length)
 				},
-				message: `${metadata.displayName ?? metadata.name} network is ready to use on Hyperlane! 🚀🚀🚀`,
+				message: `🚀🚀🚀 ${metadata.displayName ?? metadata.name} network is ready to use on Hyperlane! 🚀🚀🚀`,
 			};
 			diagnostics.push(diagnostic);
 		} else {
 			// offer to deploy to the chain
 			const diagnostic: Diagnostic = {
-				severity: DiagnosticSeverity.Warning,
+				severity: DiagnosticSeverity.Error,
 				range: {
 					start: textDocument.positionAt(m.index),
 					end: textDocument.positionAt(m.index + m[0].length)
 				},
-				message: `Chain ID ${chainId} is not supported by Hyperlane. Would you like to deploy to this chain?`,
+				message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Deploy and make it available? ✨🪄`,
 			}
 			diagnostics.push(diagnostic);
 		}
@@ -238,9 +238,9 @@ connection.onHover(
 			connection.console.log(text);
 
 			const chainId = getChainIdFromLine(text);
+			const metadata = chainId ? chainIdToMetadata[chainId] : undefined;
 
-			if (chainId !== undefined) {
-				const metadata = chainIdToMetadata[chainId];
+			if (metadata !== undefined) {
 				connection.console.log(JSON.stringify(metadata, null, 2));
 				hover.contents = JSON.stringify(metadata, null, 2);
 
