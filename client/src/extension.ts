@@ -64,11 +64,13 @@ export async function activate(context: ExtensionContext) {
 			out.appendLine(msg);
 		};
 
-		const multiProvider = getMultiProvider();
+		const configDir = workspace.getConfiguration().get('languageServerExample.configDir') as string | undefined;
+
+
+		const multiProvider = await getMultiProvider(configDir);
 		const signer = new ethers.Wallet('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
 		multiProvider.setSharedSigner(signer);
 
-		const configDir = workspace.getConfiguration().get('languageServerExample.configDir') as string | undefined;
 
 		logger(`Using config dir ${configDir}`);
 

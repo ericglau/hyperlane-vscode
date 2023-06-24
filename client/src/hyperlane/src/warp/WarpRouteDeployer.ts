@@ -57,7 +57,7 @@ export class WarpRouteDeployer {
   ) {}
 
   static async fromArgs(): Promise<WarpRouteDeployer> {
-    const multiProvider = await getMultiProvider();
+    const multiProvider = await getMultiProvider('./');
     const { key } = await getArgs(multiProvider);
     const signer = new ethers.Wallet(key);
     multiProvider.setSharedSigner(signer);

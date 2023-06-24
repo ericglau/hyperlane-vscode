@@ -20,7 +20,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 
 // import { multisigIsmConfig } from '../../config/multisig_ism';
-// import { startBlocks } from '../../config/start_blocks';
+import { startBlocks } from '../../config/start_blocks';
 import {
   assertBalances,
   assertBytes32,
@@ -141,7 +141,7 @@ export class HyperlanePermissionlessDeployer {
     // Once we move that out to a HyperlaneIsmDeployer
     // we can just do:
     // const coreContracts = await coreDeployer.deploy();
-    const coreConfig = buildCoreConfig(owner, this.chains, this.configDir);
+    const coreConfig = await buildCoreConfig(owner, this.chains, this.configDir);
     const coreDeployer = new HyperlaneCoreDeployer(this.multiProvider);
     coreDeployer.cacheAddressesMap(addresses);
     const coreContracts: HyperlaneContractsMap<CoreFactories> = {};
@@ -193,16 +193,12 @@ export class HyperlanePermissionlessDeployer {
 
     // Finally, deploy IGPs to all chains
     // TODO: Reuse ProxyAdmin on local chain... right now *two* ProxyAdmins are deployed
-    const igpConfig = buildIgpConfig(owner, this.chains);
+    const igpConfig = await buildIgpConfig(owner, this.chains, this.configDir);
     const igpDeployer = new HyperlaneIgpDeployer(this.multiProvider);
     igpDeployer.cacheAddressesMap(addresses);
     const igps = await igpDeployer.deploy(igpConfig);
     this.logger(`IGP deployment complete`);
     addresses = this.writeMergedAddresses(addresses, igps, this.configDir);
-
-    const startBlocks: ChainMap<number> = await import(this.configDir + '/start_blocks.ts');
-
-    //readJSON(this.configDir + '/start_blocks.json')
 
     startBlocks[this.local] = await this.multiProvider
       .getProvider(this.local)

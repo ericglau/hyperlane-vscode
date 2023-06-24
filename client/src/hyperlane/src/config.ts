@@ -29,13 +29,8 @@ import path from 'path';
 
 let multiProvider: MultiProvider;
 
-export async function getMultiProvider(configDir?: string) {
-
-  if (!configDir) {
-    throw new Error('configDir is required for now');
-  }
-
-  const chains = await import(path.join(configDir, 'chains.ts'));
+export async function getMultiProvider(configDir: string) {
+  const chains = readJSON(configDir, 'chains.json') as any;
 
   if (!multiProvider) {
     const chainConfigs = { ...chainMetadata, ...chains };
@@ -108,11 +103,13 @@ export function coerceAddressToBytes32(value: string): string {
   throw new Error(`Invalid value ${value}, must be a 20 or 32 byte hex string`);
 }
 
-export function buildCoreConfig(
+export async function buildCoreConfig(
   owner: types.Address,
   chains: ChainName[],
   configDir: string,
-): ChainMap<CoreConfig> {
+): Promise<ChainMap<CoreConfig>> {
+  const multisigIsmConfig = readJSON(configDir, 'multisig_ism.json') as any;
+
   const configMap: ChainMap<CoreConfig> = {};
   for (const local of chains) {
     const multisigIsmConfigs: ChainMap<MultisigIsmConfig> = {};
@@ -132,10 +129,13 @@ export function buildCoreConfig(
   return configMap;
 }
 
-export function buildIgpConfig(
+export async function buildIgpConfig(
   owner: types.Address,
   chains: ChainName[],
-): ChainMap<OverheadIgpConfig> {
+  configDir: string,
+): Promise<ChainMap<OverheadIgpConfig>> {
+  const multisigIsmConfig = readJSON(configDir, 'multisig_ism.json') as any;
+
   const mergedMultisigIsmConfig: ChainMap<MultisigIsmConfig> = objMerge(
     defaultMultisigIsmConfigs,
     multisigIsmConfig,
