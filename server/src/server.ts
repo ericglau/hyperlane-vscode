@@ -184,7 +184,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			diagnostics.push(diagnostic);
 		} else {
 			const deployedAddresses = settings.configDir ? getDeployedAddresses(chainId, settings.configDir) : undefined;
-			if (deployedAddresses !== undefined) {
+			if (deployedAddresses !== undefined && deployedAddresses.mailbox !== undefined && deployedAddresses.multisigIsm !== undefined) {
 				const diagnostic: Diagnostic = {
 					severity: DiagnosticSeverity.Information,
 					range: {
