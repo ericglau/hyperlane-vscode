@@ -277,25 +277,6 @@ ${metadata.publicRpcUrls.map((rpcUrl) => {
 	
 );
 
-// function getWord(text: string, index: number) {
-// 	var beginSubstring = text.substring(0, index);
-
-// 	var endSubstring = text.substring(index, text.length);
-// 	var boundaryRegex = /[^0-9a-zA-Z.]{1}/g; // boundaries are: not alphanumeric or dot
-//     var first = lastIndexOfRegex(beginSubstring, boundaryRegex) + 1;
-// 	var last = index + indexOfRegex(endSubstring, boundaryRegex);
-
-// 	return text.substring(first !== -1 ? first : 0, last !== -1 ? last : text.length - 1);
-// }
-
-// async function getHoverMarkdownForAddress(address: string) {
-// 	var result = await getMarkdownForTokenAddress(address)
-// 	if (result === "") {
-// 		result = await getMarkdownForRegularAddress(address)
-// 	}
-// 	return result;
-// }
-
 // This handler resolves additional information for the item selected in
 // the completion list.
 connection.onCompletionResolve(
