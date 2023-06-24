@@ -99,6 +99,7 @@ export async function activate(context: ExtensionContext) {
 			logger,
 			configDir
 		);
+		vscode.window.showInformationMessage(`Deploying Hyperlane to chain ID ${chainId}...`);
 		await deployer.deploy();
 		vscode.window.showInformationMessage(`🚀 Hyperlane deployed to ${local} with remotes ${remotes}!`);
 		client.sendNotification('workspace/didChangeConfiguration');
