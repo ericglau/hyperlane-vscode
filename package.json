@@ -41,6 +41,11 @@
 					],
 					"default": "off",
 					"description": "Traces the communication between VS Code and the language server."
+				},
+				"languageServerExample.configDir": {
+					"scope": "resource",
+					"type": "string",
+					"description": "The Hyperlane config directory, for example: /Users/username/hyperlane"
 				}
 			}
 		}
