@@ -18,6 +18,7 @@ import { HyperlanePermissionlessDeployer } from "./hyperlane/src/core/HyperlaneP
 import { ethers } from 'ethers';
 import { MultiProvider, chainIdToMetadata } from '@hyperlane-xyz/sdk';
 import { getMultiProvider } from './hyperlane/src/config';
+import { readJSON } from './hyperlane/src/json';
 
 let client: LanguageClient;
 
@@ -81,24 +82,44 @@ export async function activate(context: ExtensionContext) {
 
 		logger(`Using config dir ${configDir}`);
 
+		const { local, remotes } = getLocalsAndRemotes(chainId, out, configDir);
 
 		const deployer = new HyperlanePermissionlessDeployer(
 			multiProvider,
 			signer,
-			'anvil1',
-			['anvil2'],
+			local,
+			remotes,
 			false,
 			logger,
 			configDir
 		);
 		await deployer.deploy();
+		vscode.window.showInformationMessage(`🚀 Hyperlane deployed to ${local} with remotes ${remotes}!`);
 	});
 
 	// Start the client. This will also launch the server
 	client.start();
 }
 
+function getLocalsAndRemotes(chainId: string, out: any, configDir: string) {
+	const chains = readJSON(configDir, 'chains.json') as any;
 
+	let local = undefined;
+	const remotes = [];
+	for (const [name, chainInfo] of Object.entries(chains)) {
+		if ((chainInfo as any).chainId == chainId) {
+			out.appendLine(`Found local chain ${name}`);
+			local = name;
+		} else {
+			out.appendLine(`Found remote chain ${name}`);
+			remotes.push(name);
+		}
+		if (!local) {
+			throw new Error(`Could not find chain with chain ID ${chainId} in ${configDir}/chains.json`);
+		}
+	}
+	return { local, remotes };
+}
 
 export function deactivate(): Thenable<void> | undefined {
 	if (!client) {

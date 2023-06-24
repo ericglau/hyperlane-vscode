@@ -1,8 +1,6 @@
 import { ethers } from 'ethers';
 import yargs from 'yargs';
 
-import { promises as fs } from 'fs';
-
 import { LegacyMultisigIsm } from '@hyperlane-xyz/core';
 import {
   ChainMap,
@@ -75,10 +73,6 @@ import path from 'path';
 type MultisigIsmContracts = {
   multisigIsm: LegacyMultisigIsm;
 };
-
-async function readJSON(path: string) {
-  return JSON.parse(await fs.readFile(path, 'utf8'));
-}
 
 export class HyperlanePermissionlessDeployer {
   constructor(
@@ -212,7 +206,7 @@ export class HyperlanePermissionlessDeployer {
       );
 
       this.logger(`Writing agent config to artifacts/agent_config.json`);
-      writeJSON('./artifacts/', 'agent_config.json', agentConfig);
+      writeJSON(path.join(this.configDir, 'artifacts/'), 'agent_config.json', agentConfig);
     }
   }
 }
