@@ -114,9 +114,9 @@ function getLocalsAndRemotes(chainId: string, out: any, configDir: string) {
 			out.appendLine(`Found remote chain ${name}`);
 			remotes.push(name);
 		}
-		if (!local) {
-			throw new Error(`Could not find chain with chain ID ${chainId} in ${configDir}/chains.json`);
-		}
+	}
+	if (!local) {
+		throw new Error(`Could not find chain with chain ID ${chainId} in ${configDir}/chains.json`);
 	}
 	return { local, remotes };
 }

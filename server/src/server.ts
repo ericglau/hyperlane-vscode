@@ -29,6 +29,9 @@ import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { chainIdToMetadata } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
 
 const DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN: string = 'DeployToChain';
@@ -100,26 +103,26 @@ connection.onInitialized(() => {
 	}
 });
 
-// The example settings
-interface ExampleSettings {
+interface HyperlaneVSCodeSettings {
 	maxNumberOfProblems: number;
+	configDir?: string;
 }
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000 };
-let globalSettings: ExampleSettings = defaultSettings;
+const defaultSettings: HyperlaneVSCodeSettings = { maxNumberOfProblems: 1000, configDir: undefined };
+let globalSettings: HyperlaneVSCodeSettings = defaultSettings;
 
 // Cache the settings of all open documents
-const documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
+const documentSettings: Map<string, Thenable<HyperlaneVSCodeSettings>> = new Map();
 
 connection.onDidChangeConfiguration(change => {
 	if (hasConfigurationCapability) {
 		// Reset all cached document settings
 		documentSettings.clear();
 	} else {
-		globalSettings = <ExampleSettings>(
+		globalSettings = <HyperlaneVSCodeSettings>(
 			(change.settings.hyperlane || defaultSettings)
 		);
 	}
@@ -128,7 +131,7 @@ connection.onDidChangeConfiguration(change => {
 	documents.all().forEach(validateTextDocument);
 });
 
-function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
+function getDocumentSettings(resource: string): Thenable<HyperlaneVSCodeSettings> {
 	if (!hasConfigurationCapability) {
 		return Promise.resolve(globalSettings);
 	}
@@ -184,17 +187,33 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			};
 			diagnostics.push(diagnostic);
 		} else {
-			// offer to deploy to the chain
-			const diagnostic: Diagnostic = {
-				severity: DiagnosticSeverity.Warning,
-				range: {
-					start: textDocument.positionAt(m.index),
-					end: textDocument.positionAt(m.index + m[0].length)
-				},
-				message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Deploy and make it available? ✨🪄`,
-				code: DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN + chainId,
+			const deployedAddresses = settings.configDir ? getDeployedAddresses(chainId, settings.configDir) : undefined;
+			if (deployedAddresses !== undefined) {
+				const diagnostic: Diagnostic = {
+					severity: DiagnosticSeverity.Information,
+					range: {
+						start: textDocument.positionAt(m.index),
+						end: textDocument.positionAt(m.index + m[0].length)
+					},
+					message: `\
+🚀🚀🚀 ${deployedAddresses.name} network is ready to use on Hyperlane! 🚀🚀🚀
+📬 Mailbox: ${deployedAddresses.mailbox}
+👩‍👩‍👧‍👧 Multisig ISM: ${deployedAddresses.multisigIsm}`,
+				};
+				diagnostics.push(diagnostic);
+			} else {
+				// offer to deploy to the chain
+				const diagnostic: Diagnostic = {
+					severity: DiagnosticSeverity.Warning,
+					range: {
+						start: textDocument.positionAt(m.index),
+						end: textDocument.positionAt(m.index + m[0].length)
+					},
+					message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Deploy and make it available? ✨🪄`,
+					code: DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN + chainId,
+				}
+				diagnostics.push(diagnostic);
 			}
-			diagnostics.push(diagnostic);
 		}
 				
 	}
@@ -202,6 +221,48 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// Send the computed diagnostics to VSCode.
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
+
+interface Addresses {
+	name: string;
+	mailbox: string;
+	multisigIsm: string;
+}
+
+function getDeployedAddresses(chainId: string, configDir: string) : Addresses | undefined {
+	// get name from chains.json
+	const chains = readJSON(configDir, 'chains.json') as any;
+	for (const [name, chainInfo] of Object.entries(chains)) {
+		if ((chainInfo as any).chainId == chainId) {
+			// check if name is in addresses.json
+			const addresses = readJSON(path.join(configDir, 'artifacts'), 'addresses.json') as any;
+			if (addresses[name] !== undefined) {
+				return {
+					name,
+					...addresses[name],
+				};
+			}
+		}
+	}
+}
+
+//=== from hyperlane json.ts ===
+
+
+export function readFileAtPath(filepath: string) {
+  if (!fs.existsSync(filepath)) {
+    throw Error(`file doesn't exist at ${filepath}`);
+  }
+  return fs.readFileSync(filepath, 'utf8');
+}
+
+export function readJSONAtPath<T>(filepath: string): T {
+  return JSON.parse(readFileAtPath(filepath)) as T;
+}
+
+export function readJSON<T>(directory: string, filename: string): T {
+  return readJSONAtPath(path.join(directory, filename));
+}
+//=== end from hyperlane json.ts ===
 
 connection.onCodeAction(
 	async (_params: CodeActionParams): Promise<CodeAction[]> => {
