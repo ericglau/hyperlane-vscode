@@ -95,6 +95,7 @@ export async function activate(context: ExtensionContext) {
 		);
 		await deployer.deploy();
 		vscode.window.showInformationMessage(`🚀 Hyperlane deployed to ${local} with remotes ${remotes}!`);
+		client.sendNotification('workspace/didChangeConfiguration');
 	});
 
 	// Start the client. This will also launch the server
