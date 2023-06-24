@@ -24,6 +24,8 @@ import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
+// const {indexOfRegex, lastIndexOfRegex} = require('index-of-regex')
+
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
@@ -220,44 +222,68 @@ connection.onHover(
 		let textDocument = documents.get(_params.textDocument.uri)
 		let position = _params.position
 		let hover : Hover = {
-			contents: "abc"
+			contents: '',
 		}
-	// 	if (textDocument !== undefined) {
-	// 		var start = {
-	// 			line: position.line,
-	// 			character: 0,
-	// 		};
-	// 		var end = {
-	// 			line: position.line + 1,
-	// 			character: 0,
-	// 		};
-	// 		var text = textDocument.getText({ start, end });
-	// 		var index = textDocument.offsetAt(position) - textDocument.offsetAt(start);
-	// 		var word = getWord(text, index);
+		if (textDocument !== undefined) {
+			var start = {
+				line: position.line,
+				character: 0,
+			};
+			var end = {
+				line: position.line + 1,
+				character: 0,
+			};
+			var text = textDocument.getText({ start, end });
 
-	// 		let buf : MarkedString = "";
-	// 		if (isValidEthereumAddress(word)) {
-	// 			// Display Ethereum address, ENS name, mainnet ETH and DAI balances
-	// 			buf = await getHoverMarkdownForAddress(word);
-	// 		} else {
-	// 			let normalized = normalizeHex(word);
-	// 			if (isPrivateKey(normalized)) {
-	// 				// Convert to public key then display
-	// 				buf = await getHoverMarkdownForAddress(toPublicKey(normalized));
-	// 			} else {
-	// 				// If it's not a private key, check if it has an ENS name
-	// 				let address = await ENSLookup(word);
-	// 				if (address != "") {
-	// 					buf = await getHoverMarkdownForAddress(address);
-	// 				}
-	// 			}
-	// 		}
-	// 		hover.contents = buf;
-	// 	}
+			connection.console.log(text);
+
+			if (text.trim().startsWith('chainId:')) {
+				const chainId = text.trim().split(':')[1].trim();
+
+				hover.contents = `
+**Chain ID**: ${chainId}
+**Network**: Sepolia`;
+			}
+
+
+
+			// // // var index = textDocument.offsetAt(position) - textDocument.offsetAt(start);
+			// // // var word = getWord(text, index);
+
+			// let buf : MarkedString = "";
+			// // // if (isValidEthereumAddress(word)) {
+			// // // 	// Display Ethereum address, ENS name, mainnet ETH and DAI balances
+			// // // 	buf = await getHoverMarkdownForAddress(word);
+			// // // } else {
+			// // // 	let normalized = normalizeHex(word);
+			// // // 	if (isPrivateKey(normalized)) {
+			// // // 		// Convert to public key then display
+			// // // 		buf = await getHoverMarkdownForAddress(toPublicKey(normalized));
+			// // // 	} else {
+			// // // 		// If it's not a private key, check if it has an ENS name
+			// // // 		let address = await ENSLookup(word);
+			// // // 		if (address != "") {
+			// // // 			buf = await getHoverMarkdownForAddress(address);
+			// // // 		}
+			// // // 	}
+			// // // }
+			// hover.contents = buf;
+		}
 		return hover;
 	}
 	
 );
+
+// function getWord(text: string, index: number) {
+// 	var beginSubstring = text.substring(0, index);
+
+// 	var endSubstring = text.substring(index, text.length);
+// 	var boundaryRegex = /[^0-9a-zA-Z.]{1}/g; // boundaries are: not alphanumeric or dot
+//     var first = lastIndexOfRegex(beginSubstring, boundaryRegex) + 1;
+// 	var last = index + indexOfRegex(endSubstring, boundaryRegex);
+
+// 	return text.substring(first !== -1 ? first : 0, last !== -1 ? last : text.length - 1);
+// }
 
 // async function getHoverMarkdownForAddress(address: string) {
 // 	var result = await getMarkdownForTokenAddress(address)
