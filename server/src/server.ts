@@ -242,18 +242,22 @@ interface Addresses {
 
 function getDeployedAddresses(chainId: string, configDir: string) : Addresses | undefined {
 	// get name from chains.json
-	const chains = readJSON(configDir, 'chains.json') as any;
-	for (const [name, chainInfo] of Object.entries(chains)) {
-		if ((chainInfo as any).chainId == chainId) {
-			// check if name is in addresses.json
-			const addresses = readJSON(path.join(configDir, 'artifacts'), 'addresses.json') as any;
-			if (addresses[name] !== undefined) {
-				return {
-					name,
-					...addresses[name],
-				};
+	try {
+		const chains = readJSON(configDir, 'chains.json') as any;
+		for (const [name, chainInfo] of Object.entries(chains)) {
+			if ((chainInfo as any).chainId == chainId) {
+				// check if name is in addresses.json
+				const addresses = readJSON(path.join(configDir, 'artifacts'), 'addresses.json') as any;
+				if (addresses[name] !== undefined) {
+					return {
+						name,
+						...addresses[name],
+					};
+				}
 			}
 		}
+	} catch (e) {
+		connection.console.error(`Error reading chains.json or addresses.json: ${e}`);
 	}
 }
 
@@ -316,7 +320,7 @@ function getQuickFix(diagnostic:Diagnostic, title:string, chainId:string) : Code
 		kind: CodeActionKind.QuickFix,
 		command: {
 			title: 'Deploy Hyperlane to chain',
-			command: 'deploy.hyperlane',
+			command: COMMAND,
 			arguments: [chainId]
 		},
 		diagnostics: [diagnostic]

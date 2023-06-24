@@ -53,7 +53,26 @@
 					"description": "Private key for deployments"
 				}
 			}
-		}
+		},
+		"menus": {
+			"explorer/context": [
+				{
+					"command": "hyperlane.generate.sample.config"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "hyperlane.generate.sample.config"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "hyperlane.generate.sample.config",
+				"category": "Hyperlane VS Code",
+				"title": "Generate Sample Config"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

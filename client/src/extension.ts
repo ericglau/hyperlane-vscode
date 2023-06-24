@@ -5,6 +5,7 @@
 
 import * as path from 'path';
 import * as vscode from "vscode";
+import * as fs from 'fs';
 import { workspace, ExtensionContext, languages, commands, Uri } from 'vscode';
 
 import {
@@ -74,6 +75,11 @@ export async function activate(context: ExtensionContext) {
 		if (!privateKey) {
 			throw new Error("Set hyperlane.privateKey in your VS Code settings under the Hyperlane extension");
 		}
+		// if chains.json doesn't exist
+		if (!fs.existsSync(path.join(configDir, 'chains.json')) || !fs.existsSync(path.join(configDir, 'multisig_ism.json'))) {
+			throw new Error(`Missing config in ${configDir}. Right-click and select "Generate Sample Config" to generate sample Hyperlane config.`);
+		}
+	
 
 		const multiProvider = await getMultiProvider(configDir);
 		const signer = new ethers.Wallet(privateKey);
@@ -97,6 +103,17 @@ export async function activate(context: ExtensionContext) {
 		vscode.window.showInformationMessage(`🚀 Hyperlane deployed to ${local} with remotes ${remotes}!`);
 		client.sendNotification('workspace/didChangeConfiguration');
 	});
+
+	const generateConfigCommand = commands.registerCommand("hyperlane.generate.sample.config", async () => {
+		const configDir = workspace.getConfiguration().get('hyperlane.configDir') as string | undefined;
+		if (!configDir) {
+			throw new Error("Set hyperlane.configDir in your VS Code settings under the Hyperlane extension");
+		}
+		fs.writeFileSync(path.join(configDir, 'chains.json'), chainsJsonSample);
+		fs.writeFileSync(path.join(configDir, 'multisig_ism.json'), multisigJsonSample);
+		vscode.window.showInformationMessage(`Generated sample config files in ${configDir}`);
+	});
+	context.subscriptions.push(generateConfigCommand);
 
 	// Start the client. This will also launch the server
 	client.start();
@@ -128,3 +145,46 @@ export function deactivate(): Thenable<void> | undefined {
 	}
 	return client.stop();
 }
+
+const chainsJsonSample = `\
+{
+  "anvil1": {
+    "name": "anvil1",
+    "chainId": 31337,
+    "nativeToken": {
+      "name": "ether",
+      "symbol": "ETH",
+      "decimals": 18
+    },
+    "publicRpcUrls": [
+      {
+        "http": "http://127.0.0.1:8545"
+      }
+    ]
+  },
+  "anvil2": {
+    "name": "anvil2",
+    "chainId": 31338,
+    "publicRpcUrls": [
+      {
+        "http": "http://127.0.0.1:8555"
+      }
+    ]
+  }
+}`;
+
+const multisigJsonSample = `\
+{
+  "anvil1": {
+    "threshold": 1,
+    "validators": [
+      "0xa0ee7a142d267c1f36714e4a8f75612f20a79720"
+    ]
+  },
+  "anvil2": {
+    "threshold": 1,
+    "validators": [
+      "0xa0ee7a142d267c1f36714e4a8f75612f20a79720"
+    ]
+  }
+}`;
