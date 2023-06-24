@@ -21,14 +21,22 @@ import { hyperlaneEnvironments } from '@hyperlane-xyz/sdk/dist/consts/environmen
 import { types, utils } from '@hyperlane-xyz/utils';
 
 // import artifactAddresses from '../artifacts/addresses.json';
-import { chains } from '../config/chains';
-import { multisigIsmConfig } from '../config/multisig_ism';
+// import { chains } from '../config/chains';
+// import { multisigIsmConfig } from '../config/multisig_ism';
 
 import { readJSON } from './json';
+import path from 'path';
 
 let multiProvider: MultiProvider;
 
-export function getMultiProvider() {
+export async function getMultiProvider(configDir?: string) {
+
+  if (!configDir) {
+    throw new Error('configDir is required for now');
+  }
+
+  const chains = await import(path.join(configDir, 'chains.ts'));
+
   if (!multiProvider) {
     const chainConfigs = { ...chainMetadata, ...chains };
     multiProvider = new MultiProvider(chainConfigs);
@@ -103,6 +111,7 @@ export function coerceAddressToBytes32(value: string): string {
 export function buildCoreConfig(
   owner: types.Address,
   chains: ChainName[],
+  configDir: string,
 ): ChainMap<CoreConfig> {
   const configMap: ChainMap<CoreConfig> = {};
   for (const local of chains) {

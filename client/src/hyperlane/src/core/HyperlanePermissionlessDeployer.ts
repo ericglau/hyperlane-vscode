@@ -1,6 +1,8 @@
 import { ethers } from 'ethers';
 import yargs from 'yargs';
 
+import { promises as fs } from 'fs';
+
 import { LegacyMultisigIsm } from '@hyperlane-xyz/core';
 import {
   ChainMap,
@@ -17,8 +19,8 @@ import {
   serializeContractsMap,
 } from '@hyperlane-xyz/sdk';
 
-import { multisigIsmConfig } from '../../config/multisig_ism';
-import { startBlocks } from '../../config/start_blocks';
+// import { multisigIsmConfig } from '../../config/multisig_ism';
+// import { startBlocks } from '../../config/start_blocks';
 import {
   assertBalances,
   assertBytes32,
@@ -36,42 +38,47 @@ import {
   TestRecipientConfig,
 } from './TestRecipientDeployer';
 import { OutputChannel } from 'vscode';
+import path from 'path';
 
-export function getArgs(multiProvider: MultiProvider) {
-  // For each chain, we need:
-  //   - ChainMetadata for the MultiProvider
-  //   - A MultisigIsmConfig
-  const { intersection } = multiProvider.intersect(
-    Object.keys(objMerge(defaultMultisigIsmConfigs, multisigIsmConfig)),
-  );
+// export function getArgs(multiProvider: MultiProvider) {
+//   // For each chain, we need:
+//   //   - ChainMetadata for the MultiProvider
+//   //   - A MultisigIsmConfig
+//   const { intersection } = multiProvider.intersect(
+//     Object.keys(objMerge(defaultMultisigIsmConfigs, multisigIsmConfig)),
+//   );
 
-  return yargs(process.argv.slice(2))
-    .describe('local', 'The chain to deploy to')
-    .choices('local', intersection)
-    .demandOption('local')
-    .array('remotes')
-    .describe(
-      'remotes',
-      "The chains with which 'local' will be able to send and receive messages",
-    )
-    .choices('remotes', intersection)
-    .demandOption('remotes')
-    .middleware(assertUnique((argv) => argv.remotes.concat(argv.local)))
-    .describe('key', 'A hexadecimal private key for transaction signing')
-    .string('key')
-    .coerce('key', assertBytes32)
-    .demandOption('key')
-    .middleware(
-      assertBalances(multiProvider, (argv) => argv.remotes.concat(argv.local)),
-    )
-    .describe('write-agent-config', 'Whether or not to write agent config')
-    .default('write-agent-config', true)
-    .boolean('write-agent-config').argv;
-}
+//   return yargs(process.argv.slice(2))
+//     .describe('local', 'The chain to deploy to')
+//     .choices('local', intersection)
+//     .demandOption('local')
+//     .array('remotes')
+//     .describe(
+//       'remotes',
+//       "The chains with which 'local' will be able to send and receive messages",
+//     )
+//     .choices('remotes', intersection)
+//     .demandOption('remotes')
+//     .middleware(assertUnique((argv) => argv.remotes.concat(argv.local)))
+//     .describe('key', 'A hexadecimal private key for transaction signing')
+//     .string('key')
+//     .coerce('key', assertBytes32)
+//     .demandOption('key')
+//     .middleware(
+//       assertBalances(multiProvider, (argv) => argv.remotes.concat(argv.local)),
+//     )
+//     .describe('write-agent-config', 'Whether or not to write agent config')
+//     .default('write-agent-config', true)
+//     .boolean('write-agent-config').argv;
+// }
 
 type MultisigIsmContracts = {
   multisigIsm: LegacyMultisigIsm;
 };
+
+async function readJSON(path: string) {
+  return JSON.parse(await fs.readFile(path, 'utf8'));
+}
 
 export class HyperlanePermissionlessDeployer {
   constructor(
@@ -81,26 +88,27 @@ export class HyperlanePermissionlessDeployer {
     public readonly remotes: ChainName[],
     public readonly writeAgentConfig?: boolean,
     protected readonly logger?: { (msg: string): void; },
+    protected readonly configDir?: string,
   ) {}
 
-  static async fromArgs(): Promise<HyperlanePermissionlessDeployer> {
-    const multiProvider = getMultiProvider();
-    const { local, remotes, key, writeAgentConfig } = await getArgs(
-      multiProvider,
-    );
-    if (remotes.includes(local))
-      throw new Error('Local and remotes must be distinct');
-    const signer = new ethers.Wallet(key);
-    multiProvider.setSharedSigner(signer);
+  // static async fromArgs(): Promise<HyperlanePermissionlessDeployer> {
+  //   const multiProvider = getMultiProvider();
+  //   const { local, remotes, key, writeAgentConfig } = await getArgs(
+  //     multiProvider,
+  //   );
+  //   if (remotes.includes(local))
+  //     throw new Error('Local and remotes must be distinct');
+  //   const signer = new ethers.Wallet(key);
+  //   multiProvider.setSharedSigner(signer);
 
-    return new HyperlanePermissionlessDeployer(
-      multiProvider,
-      signer,
-      local,
-      remotes as unknown as string[],
-      writeAgentConfig,
-    );
-  }
+  //   return new HyperlanePermissionlessDeployer(
+  //     multiProvider,
+  //     signer,
+  //     local,
+  //     remotes as unknown as string[],
+  //     writeAgentConfig,
+  //   );
+  // }
 
   get chains(): ChainName[] {
     return this.remotes.concat([this.local]);
@@ -109,11 +117,13 @@ export class HyperlanePermissionlessDeployer {
   writeMergedAddresses(
     aAddresses: HyperlaneAddressesMap<any>,
     bContracts: HyperlaneContractsMap<any>,
+    configDir: string,
   ): HyperlaneAddressesMap<any> {
     const bAddresses = serializeContractsMap(bContracts);
     const mergedAddresses = objMerge(aAddresses, bAddresses);
     this.logger(`Writing contract addresses to artifacts/addresses.json`);
-    mergeJSON('./artifacts/', 'addresses.json', mergedAddresses);
+    
+    mergeJSON(path.join(configDir, 'artifacts'), 'addresses.json', mergedAddresses);
     return mergedAddresses;
   }
 
@@ -121,7 +131,7 @@ export class HyperlanePermissionlessDeployer {
 
     let addresses =
       tryReadJSON<HyperlaneContractsMap<any>>(
-        './artifacts',
+        path.join(this.configDir, 'artifacts'),
         'addresses.json',
       ) || {};
     const owner = await this.signer.getAddress();
@@ -131,7 +141,7 @@ export class HyperlanePermissionlessDeployer {
     // Once we move that out to a HyperlaneIsmDeployer
     // we can just do:
     // const coreContracts = await coreDeployer.deploy();
-    const coreConfig = buildCoreConfig(owner, this.chains);
+    const coreConfig = buildCoreConfig(owner, this.chains, this.configDir);
     const coreDeployer = new HyperlaneCoreDeployer(this.multiProvider);
     coreDeployer.cacheAddressesMap(addresses);
     const coreContracts: HyperlaneContractsMap<CoreFactories> = {};
@@ -141,7 +151,7 @@ export class HyperlanePermissionlessDeployer {
       coreConfig[this.local],
     );
     this.logger(`Core deployment complete`);
-    addresses = this.writeMergedAddresses(addresses, coreContracts);
+    addresses = this.writeMergedAddresses(addresses, coreContracts, this.configDir);
 
     // Next, deploy MultisigIsms to the remote chains
     // TODO: Would be cleaner if using HyperlaneIsmDeployer
@@ -160,7 +170,7 @@ export class HyperlanePermissionlessDeployer {
       this.logger(`Deployment of multisig ISM to chain ${remote} complete`);
     }
     this.logger(`ISM deployment complete`);
-    addresses = this.writeMergedAddresses(addresses, isms);
+    addresses = this.writeMergedAddresses(addresses, isms, this.configDir);
 
     // Next, deploy TestRecipients to all chains
     const testRecipientConfig: ChainMap<TestRecipientConfig> = objMap(
@@ -179,7 +189,7 @@ export class HyperlanePermissionlessDeployer {
       testRecipientConfig,
     );
     this.logger(`Test recipient deployment complete`);
-    addresses = this.writeMergedAddresses(addresses, testRecipients);
+    addresses = this.writeMergedAddresses(addresses, testRecipients, this.configDir);
 
     // Finally, deploy IGPs to all chains
     // TODO: Reuse ProxyAdmin on local chain... right now *two* ProxyAdmins are deployed
@@ -188,7 +198,11 @@ export class HyperlanePermissionlessDeployer {
     igpDeployer.cacheAddressesMap(addresses);
     const igps = await igpDeployer.deploy(igpConfig);
     this.logger(`IGP deployment complete`);
-    addresses = this.writeMergedAddresses(addresses, igps);
+    addresses = this.writeMergedAddresses(addresses, igps, this.configDir);
+
+    const startBlocks: ChainMap<number> = await import(this.configDir + '/start_blocks.ts');
+
+    //readJSON(this.configDir + '/start_blocks.json')
 
     startBlocks[this.local] = await this.multiProvider
       .getProvider(this.local)
