@@ -17,13 +17,23 @@ import {
 	InitializeResult,
 	HoverParams,
 	Hover,
+	CodeActionKind,
+	CodeAction,
+	CodeActionContext,
+	CodeActionParams,
+	WorkspaceEdit,
 } from 'vscode-languageserver/node';
 
 import {
+	Range,
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
 import { chainIdToMetadata } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
+
+const DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN: string = 'DeployToChain';
+
+const COMMAND = 'deploy.hyperlane';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -63,7 +73,9 @@ connection.onInitialize((params: InitializeParams) => {
 			hoverProvider : {
 				workDoneProgress: false
 			},
-
+			codeActionProvider : {
+				codeActionKinds : [ CodeActionKind.QuickFix ],
+			},
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -150,7 +162,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	const text = textDocument.getText();
 
 	// regex that looks for "chainId: '<any number>'," in text, where quotes are optional, and grabs the number
-	const pattern = /chainId\s*:\s*['"]?(\d+)['"]?\s*,/g;
+	const pattern = /chainId\s*:\s*['"]?(\d+)['"]?\s*/g;
 	let m: RegExpExecArray | null;
 
 	let problems = 0;
@@ -180,6 +192,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 					end: textDocument.positionAt(m.index + m[0].length)
 				},
 				message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Deploy and make it available? ✨🪄`,
+				code: DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN + chainId,
 			}
 			diagnostics.push(diagnostic);
 		}
@@ -188,6 +201,54 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	// Send the computed diagnostics to VSCode.
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+}
+
+connection.onCodeAction(
+	async (_params: CodeActionParams): Promise<CodeAction[]> => {
+		let codeActions : CodeAction[] = [];
+
+		let textDocument = documents.get(_params.textDocument.uri)
+		if (textDocument === undefined) {
+			return codeActions;
+		}
+		let context : CodeActionContext = _params.context;
+		let diagnostics : Diagnostic[] = context.diagnostics;
+
+		codeActions = await getCodeActions(diagnostics, textDocument, _params);
+
+		return codeActions;
+	}
+);
+
+async function getCodeActions(diagnostics: Diagnostic[], textDocument: TextDocument, params: CodeActionParams) : Promise<CodeAction[]> {
+	let codeActions : CodeAction[] = [];
+
+	// Get quick fixes for each diagnostic
+	for (let i = 0; i < diagnostics.length; i++) {
+
+		let diagnostic = diagnostics[i];
+		if (String(diagnostic.code).startsWith(DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN)) {
+			let title : string = "Deploy Hyperlane to chain";
+			const chainId = String(diagnostic.code).replace(DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN, "");
+			codeActions.push(getQuickFix(diagnostic, title, chainId));
+		}
+	}
+
+	return codeActions;
+}
+
+function getQuickFix(diagnostic:Diagnostic, title:string, chainId:string) : CodeAction {
+	let codeAction : CodeAction = { 
+		title: title, 
+		kind: CodeActionKind.QuickFix,
+		command: {
+			title: 'Deploy Hyperlane to chain',
+			command: 'deploy.hyperlane',
+			arguments: [chainId]
+		},
+		diagnostics: [diagnostic]
+	}
+	return codeAction;
 }
 
 connection.onDidChangeWatchedFiles(_change => {

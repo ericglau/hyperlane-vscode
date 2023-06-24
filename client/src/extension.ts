@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, ExtensionContext, languages, commands, Uri } from 'vscode';
 
 import {
 	LanguageClient,
@@ -48,6 +48,11 @@ export function activate(context: ExtensionContext) {
 		serverOptions,
 		clientOptions
 	);
+	
+	commands.registerCommand("deploy.hyperlane", (chainId: string) => {
+		console.log(`Deploying Hyperlane to ${chainId}...`);
+		commands.executeCommand("vscode.open", Uri.parse('http://www.google.com'));
+	});
 
 	// Start the client. This will also launch the server
 	client.start();
