@@ -106,7 +106,7 @@ export async function activate(context: ExtensionContext) {
 	const generateConfigCommand = commands.registerCommand("hyperlane.generate.sample.config", async () => {
 		const configDir = workspace.getConfiguration().get('hyperlane.configDir') as string | undefined;
 		if (!configDir) {
-			throw new Error("Set hyperlane.configDir in your VS Code settings under the Hyperlane extension");
+			throw new Error("Set configDir in your VS Code settings under the Hyperlane extension");
 		}
 		fs.writeFileSync(path.join(configDir, 'chains.json'), chainsJsonSample);
 		fs.writeFileSync(path.join(configDir, 'multisig_ism.json'), multisigJsonSample);
@@ -114,6 +114,16 @@ export async function activate(context: ExtensionContext) {
 		client.sendNotification('workspace/didChangeConfiguration'); // refresh
 	});
 	context.subscriptions.push(generateConfigCommand);
+
+	commands.registerCommand("hyperlane.configure", () => {
+		commands.executeCommand("vscode.open", "http://www.google.com");
+		const configDir = workspace.getConfiguration().get('hyperlane.configDir') as string | undefined;
+		if (!configDir) {
+			vscode.window.showInformationMessage("Set configDir in your VS Code settings under the Hyperlane extension to the folder where you downloaded the config file");			
+		} else {
+			vscode.window.showInformationMessage(`NOTE: Copy the downloaded config file to ${configDir} and refresh`);
+		}
+	})
 
 	// Start the client. This will also launch the server
 	client.start();

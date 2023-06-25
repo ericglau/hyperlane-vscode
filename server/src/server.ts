@@ -34,10 +34,12 @@ import * as path from 'path';
 
 import { chainIdToMetadata } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata';
 
-const DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN: string = 'DeployToChain';
+const DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN = 'DeployToChain';
+const DIAGNOSTIC_TYPE_CONFIG_NOT_FOUND = 'ConfigNotFound';
 
 const DEPLOY_COMMAND = 'deploy.hyperlane';
-const GENERATE_CONFIG_COMMAND = 'hyperlane.generate.sample.config';
+const GENERATE_SAMPLE_CONFIG_COMMAND = 'hyperlane.generate.sample.config';
+const CONFIGURE_HYPERLANE_COMMAND = 'hyperlane.configure';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -217,7 +219,6 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 				diagnostics.push(diagnostic);
 			} else {
 				// if config files don't exist
-				GENERATE_CONFIG_COMMAND
 				const configDir = settings.configDir;
 				if (configDir !== undefined && (!fs.existsSync(path.join(configDir, 'chains.json')) || !fs.existsSync(path.join(configDir, 'multisig_ism.json')))) {
 					const diagnostic: Diagnostic = {
@@ -226,8 +227,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 							start: textDocument.positionAt(m.index),
 							end: textDocument.positionAt(m.index + m[0].length)
 						},
-						message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Generate sample config files for deployment? ✨🪄`,
-						code: GENERATE_CONFIG_COMMAND,
+						message: `Chain ID ${chainId} is not yet supported by Hyperlane and config not found. 🪄✨ Generate or configure? ✨🪄`,
+						code: DIAGNOSTIC_TYPE_CONFIG_NOT_FOUND,
 					}
 					diagnostics.push(diagnostic);
 				} else {
@@ -328,9 +329,9 @@ async function getCodeActions(diagnostics: Diagnostic[], textDocument: TextDocum
 			let title : string = "Deploy Hyperlane to chain";
 			const chainId = String(diagnostic.code).replace(DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN, "");
 			codeActions.push(getDeployAction(diagnostic, title, chainId));
-		} else if (String(diagnostic.code) === GENERATE_CONFIG_COMMAND) {
-			let title : string = "Generate sample config";
-			codeActions.push(getGenerateAction(diagnostic, title, ""));
+		} else if (String(diagnostic.code) === DIAGNOSTIC_TYPE_CONFIG_NOT_FOUND) {
+			codeActions.push(getGenerateAction(diagnostic, "Generate sample config", ""));
+			codeActions.push(getConfigureAction(diagnostic, "Configure Hyperlane deployment", ""));
 		}
 	}
 
@@ -357,7 +358,20 @@ function getGenerateAction(diagnostic:Diagnostic, title:string, chainId:string) 
 		kind: CodeActionKind.QuickFix,
 		command: {
 			title: title,
-			command: GENERATE_CONFIG_COMMAND,
+			command: GENERATE_SAMPLE_CONFIG_COMMAND,
+		},
+		diagnostics: [diagnostic]
+	}
+	return codeAction;
+}
+
+function getConfigureAction(diagnostic:Diagnostic, title:string, chainId:string) : CodeAction {
+	let codeAction : CodeAction = { 
+		title: title, 
+		kind: CodeActionKind.QuickFix,
+		command: {
+			title: title,
+			command: CONFIGURE_HYPERLANE_COMMAND,
 		},
 		diagnostics: [diagnostic]
 	}
