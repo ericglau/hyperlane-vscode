@@ -1,6 +1,6 @@
-# Hyperlan VS Code UI
+# Hyperlane VS Code UI
 
-This UI is built to support the deployment of Contracts with Hyperlane. 
+This UI is built to support the deployment of contracts with Hyperlane. 
 It helps to generate config files: `chains.json` and `multisig_ism.json` 
 in order to support the automation of the deployment.
 

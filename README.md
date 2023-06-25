@@ -25,3 +25,13 @@ In VS Code's settings, under Extensions > Hyperlane VS Code, the following setti
 The config dir can be a directory which is an empty folder. The extension allows you to generate sample config files in the config dir, or you can use the web app to configure your deployments and save the resulting JSON files to the config dir specified in the VS Code extension settings.
 
 The supported fields in each config file are as per https://github.com/hyperlane-xyz/hyperlane-deploy/tree/main/config, but in JSON format, and the files must have a .json extension.
+
+## UI
+
+Web app for configuring deployments is available at https://hyperlane-vscode.vercel.app/
+
+See [ui/README.md](ui/README.md)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
