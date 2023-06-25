@@ -170,7 +170,7 @@ export default function DeployContracts() {
         <Typography component="h1" variant="h5">
           Deploy Contracts
         </Typography>
-        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
