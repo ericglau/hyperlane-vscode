@@ -76,9 +76,7 @@ export async function activate(context: ExtensionContext) {
 			throw new Error("Set hyperlane.privateKey in your VS Code settings under the Hyperlane extension");
 		}
 		// if chains.json doesn't exist
-		if (!fs.existsSync(path.join(configDir, 'chains.json')) || !fs.existsSync(path.join(configDir, 'multisig_ism.json'))) {
-			throw new Error(`Missing config in ${configDir}. Right-click and select "Generate Sample Config" to generate sample Hyperlane config.`);
-		}
+		assertConfigFilesExist(configDir);
 	
 
 		const multiProvider = await getMultiProvider(configDir);
@@ -113,11 +111,18 @@ export async function activate(context: ExtensionContext) {
 		fs.writeFileSync(path.join(configDir, 'chains.json'), chainsJsonSample);
 		fs.writeFileSync(path.join(configDir, 'multisig_ism.json'), multisigJsonSample);
 		vscode.window.showInformationMessage(`Generated sample config files in ${configDir}`);
+		client.sendNotification('workspace/didChangeConfiguration'); // refresh
 	});
 	context.subscriptions.push(generateConfigCommand);
 
 	// Start the client. This will also launch the server
 	client.start();
+}
+
+function assertConfigFilesExist(configDir: string) {
+	if (!fs.existsSync(path.join(configDir, 'chains.json')) || !fs.existsSync(path.join(configDir, 'multisig_ism.json'))) {
+		throw new Error(`Missing config in ${configDir}. Right-click and select "Generate Sample Config" to generate sample Hyperlane config.`);
+	}
 }
 
 function getLocalsAndRemotes(chainId: string, out: any, configDir: string) {

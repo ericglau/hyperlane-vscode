@@ -36,7 +36,8 @@ import { chainIdToMetadata } from '@hyperlane-xyz/sdk/dist/consts/chainMetadata'
 
 const DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN: string = 'DeployToChain';
 
-const COMMAND = 'deploy.hyperlane';
+const DEPLOY_COMMAND = 'deploy.hyperlane';
+const GENERATE_CONFIG_COMMAND = 'hyperlane.generate.sample.config';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -214,17 +215,34 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 				};
 				diagnostics.push(diagnostic);
 			} else {
-				// offer to deploy to the chain
-				const diagnostic: Diagnostic = {
-					severity: DiagnosticSeverity.Warning,
-					range: {
-						start: textDocument.positionAt(m.index),
-						end: textDocument.positionAt(m.index + m[0].length)
-					},
-					message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Deploy and make it available? ✨🪄`,
-					code: DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN + chainId,
-				}
-				diagnostics.push(diagnostic);
+				// if config files don't exist
+				GENERATE_CONFIG_COMMAND
+				const configDir = settings.configDir;
+				if (configDir !== undefined && (!fs.existsSync(path.join(configDir, 'chains.json')) || !fs.existsSync(path.join(configDir, 'multisig_ism.json')))) {
+					const diagnostic: Diagnostic = {
+						severity: DiagnosticSeverity.Warning,
+						range: {
+							start: textDocument.positionAt(m.index),
+							end: textDocument.positionAt(m.index + m[0].length)
+						},
+						message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Generate sample config files? ✨🪄`,
+						code: GENERATE_CONFIG_COMMAND,
+					}
+					diagnostics.push(diagnostic);
+				} else {
+					// else offer to deploy to the chain
+					const diagnostic: Diagnostic = {
+						severity: DiagnosticSeverity.Warning,
+						range: {
+							start: textDocument.positionAt(m.index),
+							end: textDocument.positionAt(m.index + m[0].length)
+						},
+						message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Deploy and make it available? ✨🪄`,
+						code: DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN + chainId,
+					}
+					diagnostics.push(diagnostic);
+					}
+
 			}
 		}
 				
@@ -307,21 +325,37 @@ async function getCodeActions(diagnostics: Diagnostic[], textDocument: TextDocum
 		if (String(diagnostic.code).startsWith(DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN)) {
 			let title : string = "Deploy Hyperlane to chain";
 			const chainId = String(diagnostic.code).replace(DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN, "");
-			codeActions.push(getQuickFix(diagnostic, title, chainId));
+			codeActions.push(getDeployAction(diagnostic, title, chainId));
+		} else if (String(diagnostic.code) === GENERATE_CONFIG_COMMAND) {
+			let title : string = "Generate sample config";
+			codeActions.push(getGenerateAction(diagnostic, title, ""));
 		}
 	}
 
 	return codeActions;
 }
 
-function getQuickFix(diagnostic:Diagnostic, title:string, chainId:string) : CodeAction {
+function getDeployAction(diagnostic:Diagnostic, title:string, chainId:string) : CodeAction {
 	let codeAction : CodeAction = { 
 		title: title, 
 		kind: CodeActionKind.QuickFix,
 		command: {
-			title: 'Deploy Hyperlane to chain',
-			command: COMMAND,
+			title: title,
+			command: DEPLOY_COMMAND,
 			arguments: [chainId]
+		},
+		diagnostics: [diagnostic]
+	}
+	return codeAction;
+}
+
+function getGenerateAction(diagnostic:Diagnostic, title:string, chainId:string) : CodeAction {
+	let codeAction : CodeAction = { 
+		title: title, 
+		kind: CodeActionKind.QuickFix,
+		command: {
+			title: title,
+			command: GENERATE_CONFIG_COMMAND,
 		},
 		diagnostics: [diagnostic]
 	}
