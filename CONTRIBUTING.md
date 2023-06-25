@@ -1,5 +1,7 @@
 # Contributing
 
+This project is built using the Language Server Protocol.  It has a language server, language client, and a UI web app that can be deployed online.
+
 ## Structure
 
 ```
