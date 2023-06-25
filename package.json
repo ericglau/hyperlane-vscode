@@ -1,17 +1,19 @@
 {
-	"name": "lsp-sample",
-	"description": "A language server example",
-	"author": "Microsoft Corporation",
-	"license": "MIT",
-	"version": "1.0.0",
+	"name": "hyperlane-vscode",
+	"description": "Hyperlane VS Code",
+	"contributors": [
+		"Eric Lau",
+		"Brian Kwong"
+	],
+	"version": "0.0.1",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-extension-samples"
+		"url": "https://github.com/ericglau/hyperlane-vscode"
 	},
-	"publisher": "vscode-samples",
+	"publisher": "ericglau",
 	"categories": [],
 	"keywords": [
-		"multi-root ready"
+		"hyperlane"
 	],
 	"engines": {
 		"vscode": "^1.75.0"
@@ -83,18 +85,19 @@
 		"test": "sh ./scripts/e2e.sh"
 	},
 	"devDependencies": {
+		"@trivago/prettier-plugin-sort-imports": "^4.1.1",
 		"@types/mocha": "^9.1.0",
 		"@types/node": "^16.18.34",
+		"@types/yargs": "^17.0.22",
 		"@typescript-eslint/eslint-plugin": "^5.54.0",
 		"@typescript-eslint/parser": "^5.54.0",
+		"@vscode/vsce": "^2.19.0",
 		"eslint": "^8.35.0",
-		"mocha": "^9.2.1",
-		"typescript": "^5.1.3",
-		"@trivago/prettier-plugin-sort-imports": "^4.1.1",
-		"@types/yargs": "^17.0.22",
 		"eslint-config-prettier": "^8.8.0",
+		"mocha": "^9.2.1",
 		"prettier": "^2.8.2",
-		"ts-node": "^10.9.1"
+		"ts-node": "^10.9.1",
+		"typescript": "^5.1.3"
 	},
 	"dependencies": {
 		"sass": "^1.63.6"
