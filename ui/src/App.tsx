@@ -1,5 +1,4 @@
 import * as React from "react";
-import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Link from "@mui/material/Link";
@@ -8,14 +7,19 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { useState } from "react";
+import hyperlane from "./hyperlane.png";
 
 export default function DeployContracts() {
-  const [publicRpcUrls1, setPublicRpcUrls1] = useState([""]);
-  const [validators1, setValidators1] = useState([""]);
+  const [publicRpcUrls1, setPublicRpcUrls1] = useState<Array<string>>([""]);
+  const [validators1, setValidators1] = useState<Array<string>>([""]);
+  const [chainId1, setChainId1] = useState<number>();
+  const [chainName1, setChainName1] = useState<string>("");
 
-  const [publicRpcUrls2, setPublicRpcUrls2] = useState([""]);
-  const [validators2, setValidators2] = useState([""]);
-
+  const [publicRpcUrls2, setPublicRpcUrls2] = useState<Array<string>>([""]);
+  const [validators2, setValidators2] = useState<Array<string>>([""]);
+  const [chainId2, setChainId2] = useState<number>();
+  const [chainName2, setChainName2] = useState<string>("");
+  
   const addPublicRpcUrl1 = () => {
     setPublicRpcUrls1([...publicRpcUrls1, ""]);
   };
@@ -83,16 +87,20 @@ export default function DeployContracts() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    setChainId1(parseInt(data.get("chainId1") as string) || undefined);
+    setChainName1(data.get("chainName1") as string);
+    setChainId2(parseInt(data.get("chainId2") as string) || undefined);
+    setChainName2(data.get("chainName2") as string);
     console.log({
       chains: {
-        [data.get("chainName1") as string]: {
-          name: data.get("chainName1"),
-          chainId: parseInt(data.get("chainId1") as string) || "",
+        [chainName1]: {
+          name: chainName1,
+          chainId: chainId1,
           publicRpcUrls: publicRpcUrls1,
         },
-        [data.get("chainName2") as string]: {
-          name: data.get("chainName2"),
-          chainId: parseInt(data.get("chainId2") as string) || "",
+        [chainName2]: {
+          name: chainName2,
+          chainId: chainId2,
           publicRpcUrls: publicRpcUrls2,
         },
       },
@@ -107,6 +115,28 @@ export default function DeployContracts() {
         },
       },
     });
+    downloadChains();
+  };
+
+  const downloadChains = () => {
+    const jsonData = {
+      [chainName1]: {
+        name: chainName1,
+        chainId: chainId1,
+        publicRpcUrls: publicRpcUrls1,
+      },
+      [chainName2]: {
+        name: chainName2,
+        chainId: chainId2,
+        publicRpcUrls: publicRpcUrls2,
+      },
+    };
+    const jsonBlob = new Blob([JSON.stringify(jsonData)], { type: 'application/json' });
+    const downloadLink = URL.createObjectURL(jsonBlob);
+    const a = document.createElement('a');
+    a.href = downloadLink;
+    a.download = 'data.json';
+    a.click();
   };
 
   return (
@@ -120,7 +150,7 @@ export default function DeployContracts() {
           justifyContent: "space-around",
         }}
       >
-        <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}></Avatar>
+        <img src={hyperlane} alt="logo" width={100} height={100}/>
         <Typography component="h1" variant="h5">
           Deploy Contracts
         </Typography>
@@ -274,7 +304,7 @@ export default function DeployContracts() {
           </div>
           <div style={{ display: "flex", justifyContent: "center" }}>
             <Button type="submit" variant="contained" sx={{ mt: 3, mb: 2 }}>
-              Deploy
+              Save JSON config
             </Button>
           </div>
         </Box>
