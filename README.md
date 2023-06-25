@@ -2,6 +2,8 @@
 
 View Hyperlane availability on different chains and deploy Hyperlane to any chain.
 
+![](cover.png)
+
 ## Functionality
 
 Detects .js and .ts files which have a reference to a chain ID, which can be in a format that looks like:
