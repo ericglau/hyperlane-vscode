@@ -179,7 +179,9 @@ export function buildOverriddenAgentConfig(
   multiProvider: MultiProvider,
   startBlocks: ChainMap<number>,
   configDir: string,
+  logger: (msg: string) => void,
 ) {
+
   const localAddresses = readJSON<HyperlaneAddressesMap<any>>(
     path.join(configDir, 'artifacts'),
     'addresses.json',
@@ -188,7 +190,7 @@ export function buildOverriddenAgentConfig(
     sdkContractAddresses,
     localAddresses,
   );
-
+  
   const filteredAddresses: ChainMap<HyperlaneAgentAddresses> = objFilter(
     mergedAddresses,
     (chain, v): v is HyperlaneAgentAddresses =>
@@ -198,10 +200,14 @@ export function buildOverriddenAgentConfig(
       !!v.validatorAnnounce,
   );
 
+  // this is needed because some chains might not have mailbox deployed yet
+  const filteredChains = chains.filter(chain => filteredAddresses[chain] !== undefined);
+
   return buildAgentConfig(
-    chains,
+    filteredChains,
     multiProvider,
     filteredAddresses,
     startBlocks,
   );
 }
+
