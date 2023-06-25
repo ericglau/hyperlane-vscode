@@ -12,13 +12,9 @@ import hyperlane from "./hyperlane.png";
 export default function DeployContracts() {
   const [publicRpcUrls1, setPublicRpcUrls1] = useState<Array<string>>([""]);
   const [validators1, setValidators1] = useState<Array<string>>([""]);
-  const [chainId1, setChainId1] = useState<number>();
-  const [chainName1, setChainName1] = useState<string>("");
 
   const [publicRpcUrls2, setPublicRpcUrls2] = useState<Array<string>>([""]);
   const [validators2, setValidators2] = useState<Array<string>>([""]);
-  const [chainId2, setChainId2] = useState<number>();
-  const [chainName2, setChainName2] = useState<string>("");
   
   const addPublicRpcUrl1 = () => {
     setPublicRpcUrls1([...publicRpcUrls1, ""]);
@@ -87,10 +83,10 @@ export default function DeployContracts() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    setChainId1(parseInt(data.get("chainId1") as string) || undefined);
-    setChainName1(data.get("chainName1") as string);
-    setChainId2(parseInt(data.get("chainId2") as string) || undefined);
-    setChainName2(data.get("chainName2") as string);
+    const chainId1 = parseInt(data.get("chainId1") as string) || 0;
+    const chainName1 = data.get("chainName1") as string;
+    const chainId2 = parseInt(data.get("chainId2") as string) || 0;
+    const chainName2 = data.get("chainName2") as string;
     console.log({
       chains: {
         [chainName1]: {
@@ -105,20 +101,21 @@ export default function DeployContracts() {
         },
       },
       multisigIsmConfig: {
-        [data.get("chainName1") as string]: {
+        [chainName1]: {
           threshold: validators1.length,
           validators: validators1,
         },
-        [data.get("chainName2") as string]: {
+        [chainName2]: {
           threshold: validators2.length,
           validators: validators2,
         },
       },
     });
-    downloadChains();
+    downloadChains(chainId1, chainId2, chainName1, chainName2);
+    downloadMultisigIsm(chainName1, chainName2);
   };
 
-  const downloadChains = () => {
+  const downloadChains = (chainId1: number, chainId2: number, chainName1 :string, chainName2: string) => {
     const jsonData = {
       [chainName1]: {
         name: chainName1,
@@ -131,11 +128,30 @@ export default function DeployContracts() {
         publicRpcUrls: publicRpcUrls2,
       },
     };
-    const jsonBlob = new Blob([JSON.stringify(jsonData)], { type: 'application/json' });
+    const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
     const downloadLink = URL.createObjectURL(jsonBlob);
     const a = document.createElement('a');
     a.href = downloadLink;
-    a.download = 'data.json';
+    a.download = 'chains.json';
+    a.click();
+  };
+
+  const downloadMultisigIsm = (chainName1 :string, chainName2: string) => {
+    const jsonData = {
+      [chainName1]: {
+        threshold: validators1.length,
+        validators: validators1,
+      },
+      [chainName2]: {
+        threshold: validators2.length,
+        validators: validators2,
+      },
+    };
+    const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+    const downloadLink = URL.createObjectURL(jsonBlob);
+    const a = document.createElement('a');
+    a.href = downloadLink;
+    a.download = 'multisig_ism.json';
     a.click();
   };
 
@@ -154,7 +170,7 @@ export default function DeployContracts() {
         <Typography component="h1" variant="h5">
           Deploy Contracts
         </Typography>
-        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
