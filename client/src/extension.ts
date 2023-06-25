@@ -116,7 +116,7 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(generateConfigCommand);
 
 	commands.registerCommand("hyperlane.configure", (chainId: string) => {
-		commands.executeCommand("vscode.open", `http://localhost:3000?chainId=${chainId}`);
+		commands.executeCommand("vscode.open", `https://hyperlane-vscode.vercel.app?chainId=${chainId}`);
 		const configDir = workspace.getConfiguration().get('hyperlane.configDir') as string | undefined;
 		if (!configDir) {
 			vscode.window.showInformationMessage("Set configDir in your VS Code settings under the Hyperlane extension to the folder where you downloaded the config file");			
