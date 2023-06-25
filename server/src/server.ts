@@ -228,7 +228,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 							end: textDocument.positionAt(m.index + m[0].length)
 						},
 						message: `Chain ID ${chainId} is not yet supported by Hyperlane and config not found. 🪄✨ Generate or configure? ✨🪄`,
-						code: DIAGNOSTIC_TYPE_CONFIG_NOT_FOUND,
+						code: DIAGNOSTIC_TYPE_CONFIG_NOT_FOUND + chainId,
 					}
 					diagnostics.push(diagnostic);
 				} else {
@@ -326,12 +326,12 @@ async function getCodeActions(diagnostics: Diagnostic[], textDocument: TextDocum
 
 		let diagnostic = diagnostics[i];
 		if (String(diagnostic.code).startsWith(DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN)) {
-			let title : string = "Deploy Hyperlane to chain";
 			const chainId = String(diagnostic.code).replace(DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN, "");
-			codeActions.push(getDeployAction(diagnostic, title, chainId));
-		} else if (String(diagnostic.code) === DIAGNOSTIC_TYPE_CONFIG_NOT_FOUND) {
+			codeActions.push(getDeployAction(diagnostic, "Deploy Hyperlane to chain", chainId));
+		} else if (String(diagnostic.code).startsWith(DIAGNOSTIC_TYPE_CONFIG_NOT_FOUND)) {
+			const chainId = String(diagnostic.code).replace(DIAGNOSTIC_TYPE_CONFIG_NOT_FOUND, "");
 			codeActions.push(getGenerateAction(diagnostic, "Generate sample config", ""));
-			codeActions.push(getConfigureAction(diagnostic, "Configure Hyperlane deployment", ""));
+			codeActions.push(getConfigureAction(diagnostic, "Configure Hyperlane deployment", chainId));
 		}
 	}
 
@@ -372,6 +372,7 @@ function getConfigureAction(diagnostic:Diagnostic, title:string, chainId:string)
 		command: {
 			title: title,
 			command: CONFIGURE_HYPERLANE_COMMAND,
+			arguments: [chainId]
 		},
 		diagnostics: [diagnostic]
 	}
