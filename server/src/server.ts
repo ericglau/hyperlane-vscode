@@ -201,7 +201,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			diagnostics.push(diagnostic);
 		} else {
 			const deployedAddresses = settings.configDir ? getDeployedAddresses(chainId, settings.configDir) : undefined;
-			if (deployedAddresses !== undefined && deployedAddresses.mailbox !== undefined && deployedAddresses.multisigIsm !== undefined) {
+			if (deployedAddresses !== undefined && deployedAddresses.mailbox !== undefined && deployedAddresses.multisigIsm !== undefined && deployedAddresses.interchainGasPaymaster !== undefined) {
 				const diagnostic: Diagnostic = {
 					severity: DiagnosticSeverity.Information,
 					range: {
@@ -211,7 +211,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 					message: `\
 🚀🚀🚀 ${deployedAddresses.name} network is ready to use on Hyperlane! 🚀🚀🚀
 📬 Mailbox: ${deployedAddresses.mailbox}
-👩‍👩‍👧‍👧 Multisig ISM: ${deployedAddresses.multisigIsm}`,
+🔐 Multisig ISM: ${deployedAddresses.multisigIsm}
+⛽ IGP: ${deployedAddresses.interchainGasPaymaster}`,
 				};
 				diagnostics.push(diagnostic);
 			} else {
@@ -225,7 +226,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 							start: textDocument.positionAt(m.index),
 							end: textDocument.positionAt(m.index + m[0].length)
 						},
-						message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Generate sample config files? ✨🪄`,
+						message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Generate sample config files for deployment? ✨🪄`,
 						code: GENERATE_CONFIG_COMMAND,
 					}
 					diagnostics.push(diagnostic);
@@ -237,7 +238,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 							start: textDocument.positionAt(m.index),
 							end: textDocument.positionAt(m.index + m[0].length)
 						},
-						message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Deploy and make it available? ✨🪄`,
+						message: `Chain ID ${chainId} is not yet supported by Hyperlane. 🪄✨ Deploy Hyperlane to chain? ✨🪄`,
 						code: DIAGNOSTIC_TYPE_DEPLOY_TO_CHAIN + chainId,
 					}
 					diagnostics.push(diagnostic);
@@ -256,6 +257,7 @@ interface Addresses {
 	name: string;
 	mailbox: string;
 	multisigIsm: string;
+	interchainGasPaymaster: string;
 }
 
 function getDeployedAddresses(chainId: string, configDir: string) : Addresses | undefined {
