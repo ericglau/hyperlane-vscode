@@ -10,6 +10,11 @@ import { useState } from "react";
 import hyperlane from "./hyperlane.png";
 
 export default function DeployContracts() {
+  const queryParameters = new URLSearchParams(window.location.search)
+  const chainId = queryParameters.get("chainId");
+
+  const [chainId1, setChainId1] = useState<string>(chainId ? chainId : "");
+
   const [publicRpcUrls1, setPublicRpcUrls1] = useState<Array<string>>([""]);
   const [validators1, setValidators1] = useState<Array<string>>([""]);
 
@@ -92,12 +97,12 @@ export default function DeployContracts() {
         [chainName1]: {
           name: chainName1,
           chainId: chainId1,
-          publicRpcUrls: publicRpcUrls1,
+          publicRpcUrls: publicRpcUrls1.map((url)=> { return {http: url} }),
         },
         [chainName2]: {
           name: chainName2,
           chainId: chainId2,
-          publicRpcUrls: publicRpcUrls2,
+          publicRpcUrls: publicRpcUrls2.map((url)=> { return {http: url} }),
         },
       },
       multisigIsmConfig: {
@@ -120,12 +125,12 @@ export default function DeployContracts() {
       [chainName1]: {
         name: chainName1,
         chainId: chainId1,
-        publicRpcUrls: publicRpcUrls1,
+        publicRpcUrls: publicRpcUrls1.map((url)=> { return {http: url} }),
       },
       [chainName2]: {
         name: chainName2,
         chainId: chainId2,
-        publicRpcUrls: publicRpcUrls2,
+        publicRpcUrls: publicRpcUrls2.map((url)=> { return {http: url} }),
       },
     };
     const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
@@ -180,13 +185,15 @@ export default function DeployContracts() {
                   fullWidth
                   id="chainId1"
                   label="Chain ID"
-                  autoFocus
+                  value={chainId1}
+                  onChange={(e) => setChainId1(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
                   required
                   fullWidth
+                  autoFocus
                   id="chainName1"
                   label="Chain Name"
                   name="chainName1"
